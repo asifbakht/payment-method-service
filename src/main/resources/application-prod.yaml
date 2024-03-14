@@ -1,0 +1,94 @@
+server:
+  port: ${CONTAINER_PORT}
+  shutdown: graceful
+  ######### SPRING BASED PATH ################
+management:
+  endpoints:
+    web:
+      base-path: /
+spring:
+  application:
+    name: payment-method-service
+  mvc:
+    servlet:
+      path: ${CONTAINER_BASE_PATH}
+  threads:
+    virtual:
+      enabled: true #Spring 3.2 feature
+  ######## JPA ########
+  jpa:
+    database-platform: org.hibernate.dialect.MySQL8Dialect
+    show-sql: true
+    properties:
+      hibernate:
+        format-sql: true
+  data:
+    redis:
+      repositories:
+        type: none
+  ######## DB PROPERTIES ########
+  datasource:
+    #    url: jdbc:mysql://localhost/customer-db?createDatabaseIfNotExist=true
+    url: jdbc:mysql://${DB_HOST}:${DB_PORT}/${DB_NAME}?createDatabaseIfNotExist=true
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    hikari.connectionTimeout: ${DB_CONNECTION_TIME_OUT}
+    hikari.idleTimeout: ${DB_IDLE_TIME_OUT}
+    hikari.maxLifetime: ${DB_MAX_LIFE_TIME_OUT}
+  ######## DB MIGRATION ########
+  flyway:
+    url: jdbc:mysql://${DB_HOST}:${DB_PORT}/${DB_NAME}?createDatabaseIfNotExist=true
+    user: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    baseline:
+      version: 1
+    locations: classpath:db/migration
+    enabled: true
+  ######## REDIS CACHE #######
+  redis:
+    host: ${REDIS_HOST}
+    port: ${REDIS_PORT}
+  ######### SHED LOCK ########
+  cron:
+    pending-payment: ${SHED_LOCK_PENDING_PAYMENT}
+  ######## SPRINT DOC ########
+springdoc:
+  api-docs:
+    path: /docs
+  swagger-ui:
+    path: /docs/swagger-ui.html
+  show-actuator: true
+  ######## LOGGING ########
+logging:
+  level:
+    root: ${LOG_ROOT_LEVEL}
+    com.microservice.*: ${LOG_APP_LEVEL}
+  ######## CIRCRUIT BREAKR ########
+resilience4j:
+  circuitbreaker:
+    instances:
+      payment-service:
+        failureRateThreshold: ${CB_FAILURE_THRESHOLD}
+        minimumNumberOfCalls: ${CB_FAILURE_MIN_NO_CALL}
+        permittedNumberOfCallsInHalfOpenState: ${CB_FAILURE_PERMITTED_NO_CALLS_IN_HALF_OPEN_STATE}
+        slidingWindowSize: ${CB_FAILURE_SLIDING_WINDOW}
+        waitDurationInOpenState: ${CB_FAILURE_WAIT_DURATION_IN_OPEN_STATE}
+        slidingWindowType: COUNT_BASED
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+        registerHealthIndicator: true
+        ignoreExceptions:
+          - com.microservice.paymentmethod.exception.DuplicateException
+          - com.microservice.paymentmethod.exception.NotFoundException
+          - com.microservice.paymentmethod.exception.GenericException
+  ######### CUSTOM PROPERTIES ##########
+payment:
+  modification: ${TOTAL_MODIFICATION_ALLOWED}
+  processing:
+    day: ${TOTAL_DAYS_TO_PROCESS_PAYMENT} # days to add to finalize and process payments
+  ######### CACHE CONFIGURATION #############
+cache:
+  default:
+    time-to-live: ${DEFAULT_CACHE_TTL} #minutes
+  payment:
+    time-to-live: ${PAYMENT_CACHE_TTL} # minutes

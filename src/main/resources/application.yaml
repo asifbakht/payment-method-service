@@ -1,0 +1,89 @@
+server:
+  port: 9998
+  shutdown: graceful
+  ######### SPRING BASED PATH ################
+management:
+  endpoints:
+    web:
+      base-path: /
+spring:
+  application:
+    name: payment-service
+  mvc:
+    servlet:
+      path: /api/v1
+  threads:
+    virtual:
+      enabled: true #Spring 3.2 feature
+  ######## JPA ########
+  jpa:
+    database-platform: org.hibernate.dialect.MySQL8Dialect
+    show-sql: true
+    properties:
+      hibernate:
+        format-sql: true
+  ######## DB PROPERTIES ########
+  datasource:
+    url: jdbc:mysql://localhost:3306/payment-db?createDatabaseIfNotExist=true
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: social_user
+    password: mysql2024
+    hikari.connectionTimeout: 100000
+    hikari.idleTimeout: 600000
+    hikari.maxLifetime: 1800000
+  ######## DB MIGRATION ########
+  flyway:
+    url: jdbc:mysql://localhost:3306/payment-db?createDatabaseIfNotExist=true
+    user: social_user
+    password: mysql2024
+    baseline:
+      version: 1
+    locations: classpath:db/migration
+    enabled: true
+  ######## REDIS CACHE #######
+  redis:
+    host: 127.0.0.1
+    port: 6379
+  ######### SHED LOCK ###########
+  cron:
+    pending-payment: "*/10 * * * * *"
+  ######## SPRING DOC ########
+springdoc:
+  api-docs:
+    path: /docs
+  swagger-ui:
+    path: /docs/swagger-ui.html
+  show-actuator: true
+  ######## LOGGING ########
+logging:
+  level:
+    root: INFO
+    com.microservice.*: DEBUG
+  ######## CIRCRUIT BREAKR ########
+resilience4j:
+  circuitbreaker:
+    instances:
+      payment-service:
+        failureRateThreshold: 25
+        minimumNumberOfCalls: 10
+        permittedNumberOfCallsInHalfOpenState: 10
+        slidingWindowSize: 55
+        waitDurationInOpenState: 10s
+        slidingWindowType: COUNT_BASED
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+        registerHealthIndicator: true
+        ignoreExceptions:
+          - com.microservice.paymentmethod.exception.DuplicateException
+          - com.microservice.paymentmethod.exception.NotFoundException
+          - com.microservice.paymentmethod.exception.GenericException
+  ######### CUSTOM PAYMENT PROPERTIES ##########
+payment:
+  modification: 2
+  processing:
+    day: 1 # days to add to finalize and process payments
+  ######### CACHE CONFIGURATION #############
+cache:
+  default:
+    time-to-live: 5 #minutes
+  payment:
+    time-to-live: 10 # minutes
