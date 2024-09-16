@@ -17,6 +17,8 @@ jobs:
   terraform-plan:
     runs-on: ubuntu-latest
     env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}    
       TF_VAR_app_name: payment-auth-service
       TF_VAR_environment: ${{ inputs.env }}
       TF_VAR_primary_region: us-east-2
@@ -39,40 +41,22 @@ jobs:
       - name: Determine Backend Config
         id: backend-config
         shell: bash
-        env:
-          BACKEND_CONFIG: ''
-          SECRECT_ENV_PREFIX: ''
-          AWS_ACCOUNT_ID: ''
         run: |
-          tests=16
-          failures=2
           echo "BACKEND_CONFIG=backend-${{ inputs.env }}.tfvars" >> $GITHUB_ENV
           echo "SECRECT_ENV_PREFIX=${{ format('SECRECT_ENV_PREFIX_{0}', inputs.env) }}" >> $GITHUB_ENV
           echo "AWS_ACCOUNT_ID=${{ format('AWS_ACCOUNT_ID_{0}', inputs.env) }}" >> $GITHUB_ENV
-          echo "AWS account id is: ${{ env.AWS_ACCOUNT_ID }} and ${{ env.BACKEND_CONFIG }} prefix ${{ env.SECRECT_ENV_PREFIX }}"
+          echo "SUPPORT_SECONDARY=${{ format('SUPPORT_SECONDARY_{0}', inputs.env) }}" >> $GITHUB_ENV
  
       - name: Terraform Init
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         run: terraform init -lock=false -backend-config="${{ env.BACKEND_CONFIG }}" -lock=false
 
       - name: Terraform Plan
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         id: plan
         run: terraform plan -lock=false -out=tfplan
 
       - name: Terraform Apply
         env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          TF_VAR_app_name: payment-auth-service
-          TF_VAR_environment: ${{ inputs.env }}
-          TF_VAR_primary_region: us-east-2
-          TF_VAR_secondary_region: us-west-2
           TF_VAR_secret_env_prefix: ${{ secrets[env.SECRECT_ENV_PREFIX] }}
           TF_VAR_aws_account_id: ${{ secrets[env.AWS_ACCOUNT_ID] }}
-          TF_VAR_support_secondary: ${{ secrets.SUPPORT_SECONDARY }}
+          TF_VAR_support_secondary: ${{ secrets[env.SUPPORT_SECONDARY] }}
         run: terraform apply -lock=false -auto-approve tfplan
