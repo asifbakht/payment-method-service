@@ -8,7 +8,7 @@ terraform {
   backend "s3" {}
 }
 provider "aws" {
-  region = var.main_region
+  region = var.primary_region
   # assume_role {
   #   role_arn = "arn:aws:iam::${var.aws_account_id}:role/TerraformProvisioningRole"
   # }
