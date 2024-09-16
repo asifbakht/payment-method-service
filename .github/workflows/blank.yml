@@ -23,7 +23,6 @@ jobs:
       TF_VAR_environment: ${{ inputs.env }}
       TF_VAR_primary_region: us-east-2
       TF_VAR_secondary_region: us-west-2
-      TF_VAR_support_secondary: false
     defaults:
       run:
         shell: bash
@@ -52,6 +51,10 @@ jobs:
 
       - name: Terraform Plan
         id: plan
+        env:
+          TF_VAR_secret_env_prefix: ${{ secrets[env.SECRECT_ENV_PREFIX] }}
+          TF_VAR_aws_account_id: ${{ secrets[env.AWS_ACCOUNT_ID] }}
+          TF_VAR_support_secondary: ${{ secrets[env.SUPPORT_SECONDARY] }}
         run: terraform plan -lock=false -out=tfplan
 
       - name: Terraform Apply
