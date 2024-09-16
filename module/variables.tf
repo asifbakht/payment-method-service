@@ -6,9 +6,9 @@ variable "environment" {
   type        = string
   description = "The environment name"
 }
-variable "main_region" {
+variable "primary_region" {
   type        = string
-  description = "The main regio where the resources will be provisioned"
+  description = "The primary regio where the resources will be provisioned"
 }
 variable "secondary_region" {
   type        = string
