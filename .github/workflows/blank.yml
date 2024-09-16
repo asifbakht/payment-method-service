@@ -1,0 +1,54 @@
+name: Terraform Secrets/SQS
+run-name: Deployment (${{ inputs.env }})
+on:
+  workflow_dispatch:
+    inputs:
+      env:
+        description: Environment
+        default: dev
+        required: true
+        type: choice
+        options:
+          - dev
+          - qa
+          - stage
+          - prod
+jobs:
+  terraform-plan:
+    runs-on: [self-hosted, Standard]
+    defaults:
+      run:
+        shell: bash
+        working-directory: terraform/module
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.9.5
+          terraform_wrapper: false
+
+      - name: Determine Backend Config
+        id: backend-config
+        run: |
+          echo "BACKEND_CONFIG=backend-${{ inputs.env }}.tfvars" >> $GITHUB_ENV
+
+      - name: Terraform Init
+        run: terraform init -backend-config="${{ env.BACKEND_CONFIG }}"
+
+      - name: Terraform Plan
+        id: plan
+        run: terraform plan -out=tfplan
+
+      - name: Terraform Apply
+        run: terraform apply -auto-approve tfplan
+        env:
+          TF_VAR_app_name: vertex-auth-service
+          TF_VAR_environment: ${{ inputs.env }}
+          TF_VAR_primary_region: us-east-2
+          TF_VAR_secondary_region: us-west-2
+          TF_VAR_secret_env_prefix: ${{ secrets['SECRECT_ENV_PREFIX_' + inputs.env] }}
+          TF_VAR_aws_account_id: ${{ secrets['AWS_ACCOUNT_ID_' + inputs.env] }}
+          TF_VAR_support_secondary: ${{ secrets.SUPPORT_SECONDARY }}
