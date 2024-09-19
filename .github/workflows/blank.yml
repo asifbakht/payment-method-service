@@ -35,7 +35,7 @@ jobs:
           terraform_version: 1.9.5
           terraform_wrapper: false
       - name: Terraform Init
-        run: terraform init -backend-config=${{ env.BACKEND_CONFIG }} -var-file=${{ env.VAR_FILE }}
+        run: terraform init -backend-config="${{ env.BACKEND_CONFIG }}" -var-file=${{ env.VAR_FILE }}
 
       - name: Terraform Plan
         run: terraform plan -out=tfplan
