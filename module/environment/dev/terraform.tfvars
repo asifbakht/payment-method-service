@@ -1,5 +1,5 @@
 environment       = "dev"
-app_name          = "vertex-auth-service"
+app_name          = "payment-auth-service"
 support_secondary = false
 primary_region    = "us-east-1"
 secondary_region  = "us-west-1"
